@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pre-Settlement 검사 체크리스트</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#f5f5f0;--card:#fff;--border:#d4d0c8;
+--pass:#2e7d32;--pass-bg:#e8f5e9;
+--fail:#c62828;--fail-bg:#ffebee;
+--none:#9e9e9e;--none-bg:#f5f5f5;
+--accent:#1565c0;--accent-bg:#e3f2fd;
+--important:#ff6f00;
+--text:#212121;--text2:#616161;
+--shadow:0 1px 3px rgba(0,0,0,.12);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','맑은 고딕',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding-bottom:80px}
+.header{background:#1a237e;color:#fff;padding:20px 16px;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:700;letter-spacing:-.5px}
+.header .sub{font-size:12px;opacity:.8;margin-top:2px}
+.info-bar{background:#fff;padding:14px 16px;border-bottom:1px solid var(--border)}
+.info-bar input{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:14px;margin-top:6px;font-family:inherit}
+.info-bar label{font-size:12px;color:var(--text2);font-weight:600;display:block;margin-top:10px}
+.info-bar label:first-child{margin-top:0}
+.progress-bar{background:#e8eaf6;height:6px;position:sticky;top:62px;z-index:99}
+.progress-fill{height:100%;background:#1a237e;transition:width .3s ease;width:0%}
+.section{margin:12px 8px}
+.section-title{font-size:15px;font-weight:700;padding:12px 14px;background:var(--card);border-radius:10px 10px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.section-title.important{border-left:4px solid var(--important)}
+.section-title .badge{font-size:10px;background:var(--important);color:#fff;padding:1px 6px;border-radius:10px;font-weight:600}
+.section-title .count{margin-left:auto;font-size:12px;color:var(--text2);font-weight:400}
+.section-title .arrow{transition:transform .2s;font-size:12px}
+.section-title.collapsed .arrow{transform:rotate(-90deg)}
+.section-body{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+.section-body.hidden{display:none}
+.item{padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:flex-start;gap:10px}
+.item:last-child{border-bottom:none}
+.item-text{flex:1;font-size:13px;line-height:1.4;padding-top:4px}
+.toggle-group{display:flex;gap:4px;flex-shrink:0}
+.toggle-btn{width:38px;height:34px;border-radius:6px;border:1.5px solid var(--border);background:var(--none-bg);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none}
+.toggle-btn.pass{border-color:var(--pass);background:var(--pass-bg);color:var(--pass)}
+.toggle-btn.fail{border-color:var(--fail);background:var(--fail-bg);color:var(--fail)}
+.toggle-btn:active{transform:scale(.92)}
+.memo-area{padding:8px 14px 12px;background:#fafafa;border-bottom:1px solid #eee}
+.memo-area textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;resize:vertical;min-height:36px;font-family:inherit}
+.memo-area .photo-row{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.photo-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px dashed var(--accent);border-radius:6px;background:var(--accent-bg);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent}
+.photo-btn input{display:none}
+.photo-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border)}
+.summary-section{margin:12px 8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.summary-section h3{font-size:14px;margin-bottom:10px}
+.summary-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.summary-row:last-child{border:none}
+.stat{display:inline-flex;align-items:center;gap:4px}
+.stat .dot{width:10px;height:10px;border-radius:50%}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:100}
+.bottom-bar button{flex:1;padding:10px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-export{background:#1a237e;color:#fff}
+.btn-reset{background:#f5f5f5;color:var(--text2);border:1px solid var(--border)!important}
+.na-label{font-size:10px;color:var(--text2);text-align:center;display:block;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>Pre-Settlement 검사 체크리스트</h1>
+<div class="sub">NSW 호주 Duplex / 한국어 버전</div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="info-bar">
+<label>검사 날짜<input type="date" id="inspDate"></label>
+<label>검사 시간<input type="time" id="inspTime"></label>
+<label>주소<input type="text" id="inspAddr" placeholder="주소 입력"></label>
+<label>검사자<input type="text" id="inspName" placeholder="검사자 이름"></label>
+</div>
+
+<div id="sectionsContainer"></div>
+
+<div class="summary-section" id="summarySection">
+<h3>검사 요약</h3>
+<div id="summaryContent"></div>
+</div>
+
+<div class="bottom-bar">
+<button class="btn-reset" onclick="resetAll()">초기화</button>
+<button class="btn-export" onclick="exportResult()">결과 복사</button>
+</div>
+
+<script>
+const DATA = [
+{title:"1. 외부 및 진입",important:false,items:[
+{section:"1.1 정원 및 랜드스케이핑",items:[
+"잔디/식물 청소됨 (쓰레기 없음)",
+"울타리 손상 없음",
+"드라이브웨이/보도 청소됨",
+"외부 조명 작동함",
+"정원 포함물 남아있음 (계약서 확인)",
+"정원 수도꼭지 작동, 누수 없음"
+]},
+{section:"1.2 지붕 및 외벽",items:[
+"지붕 손상 없음 (쌍안경 확인 권장)",
+"거터 손상/막힘 없음",
+"배수관 연결됨",
+"외벽 균열/물 손상 없음",
+"곰팡이/이끼 없음",
+"창문 프레임 썩음 없음"
+]},
+{section:"1.3 문 및 창문",items:[
+"모든 문 열림/닫힘 정상",
+"문 자물쇠 작동함",
+"모든 창문 열림/닫힘 정상",
+"창문 잠금 작동함",
+"유리 깨짐 없음",
+"실링/코킹 상태 양호"
+]}
+]},
+{title:"2. 내부 구조",important:false,items:[
+{section:"2.1 벽, 바닥, 천장",items:[
+"벽 구멍/균열 없음 (기존 결함 제외)",
+"바닥 스크래치 최소 (정상 마모 범위)",
+"카펫/나무 바닥 상태 양호",
+"천장 누수 흔적/얼룩 없음",
+"곰팡이/물 손상 흔적 없음",
+"도배/페인트 벗겨짐 없음"
+]},
+{section:"2.2 청소 상태 [중요]",important:true,items:[
+"전체 건물 청소됨",
+"부엌 청소됨 (기름때 없음)",
+"욕실 청소됨 (비누때 없음)",
+"침실 청소됨",
+"냉장고/오븐 내부 청소됨",
+"이상한 냄새 없음 (곰팡이, 담배 등)",
+"남은 쓰레기/개인 물품 없음"
+]},
+{section:"2.3 계약 포함물 [중요]",important:true,items:[
+"모든 커튼/블라인드 남아있음",
+"모든 조명 기구 설치됨",
+"빌트인 캐비닛/선반 남아있음",
+"계약서 명시 가전/가구 있음",
+"모든 키, 리모컨 제공됨",
+"거울/액자 제거 안 됨"
+]}
+]},
+{title:"3. 전기 시스템",important:false,items:[
+{section:"3.1 조명",items:[
+"모든 실내 조명 작동함",
+"모든 스위치 작동함",
+"외부 조명 작동함",
+"깜박임 없음"
+]},
+{section:"3.2 콘센트 [중요] - 휴대폰 충전기로 테스트",important:true,items:[
+"침실 콘센트 전부 작동",
+"부엌 콘센트 전부 작동",
+"욕실 콘센트 전부 작동",
+"거실 콘센트 전부 작동",
+"외부 콘센트 전부 작동"
+]},
+{section:"3.3 가전 [중요]",important:true,items:[
+"오븐/쿡탑 작동함 (가스/전기)",
+"식기세척기 작동함 (수동 사이클 테스트)",
+"세탁기 작동함",
+"건조기 작동함 (설치된 경우)",
+"냉장고 냉각 정상",
+"전자레인지 작동함",
+"에어컨/히터 작동함",
+"온수 즉시 나옴 (3초 이내)"
+]},
+{section:"3.4 특수 시스템",items:[
+"도어벨 작동함",
+"인터폰 작동함 (해당 시)",
+"CCTV 작동함 (해당 시)",
+"알람 코드 제공됨 (해당 시)",
+"차고문 리모컨 작동함 (해당 시)",
+"게이트 리모컨 작동함 (해당 시)"
+]}
+]},
+{title:"4. 배관 및 물",important:false,items:[
+{section:"4.1 싱크/수도꼭지 [중요]",important:true,items:[
+"모든 수도꼭지 온수/냉수 작동",
+"물 흐름 정상",
+"수도꼭지 아래 누수 없음",
+"배수구 배수 정상",
+"샤워기 흐름 정상"
+]},
+{section:"4.2 화장실",items:[
+"변기 플러시 작동함",
+"물 누수 없음",
+"변기 시트/뚜껑 온전함",
+"배관 이상 소음 없음",
+"환풍기 작동함 (설치된 경우)"
+]},
+{section:"4.3 온수 시스템",items:[
+"온수 즉시 나옴",
+"온수 충분히 뜨거움",
+"온수기 주변 누수 없음",
+"온수기 접근 가능",
+"역류 방지 장치 있음"
+]},
+{section:"4.4 배수 및 기타",items:[
+"하수도 냄새 없음",
+"바닥 배수 작동함 (해당 시)",
+"빨래실 배수 작동함",
+"수도 미터기 접근 가능",
+"메인 수도 차단 위치 파악"
+]}
+]},
+{title:"5. 난방 및 냉각",important:false,items:[
+{section:"5.1 에어컨 및 히터",items:[
+"에어컨 냉각 정상",
+"히터 작동함",
+"모든 실내기 작동함",
+"리모컨/제어판 작동함",
+"이상 소음 없음",
+"필터 상태 확인"
+]},
+{section:"5.2 환기",items:[
+"환풍기 작동함 (부엌/욕실)",
+"환풍 덕트 상태 양호",
+"통풍 정상"
+]}
+]},
+{title:"6. 안전 장치",important:true,items:[
+{section:"6.1 연기 감지기 [법적 필수]",important:true,items:[
+"모든 침실에 설치됨",
+"거실에 설치됨",
+"부엌 근처에는 없음 (오작동 방지)",
+"테스트 버튼 작동함",
+"배터리 정상 확인"
+]},
+{section:"6.2 일산화탄소 감지기 (가스 사용 시)",items:[
+"감지기 설치됨",
+"정상 작동 확인"
+]},
+{section:"6.3 소화기 및 안전 장비",items:[
+"소화기 제공됨 (해당 시)",
+"소화기 위치 파악"
+]}
+]},
+{title:"7. 가스 시스템",important:false,items:[
+{section:"7.1 가스 레인지/오븐 [중요]",important:true,items:[
+"모든 버너 점화됨",
+"불꽃 색상 정상 (파란색)",
+"제어 손잡이 작동함",
+"오븐 가열됨"
+]},
+{section:"7.2 가스 미터 및 안전",items:[
+"가스 미터 읽을 수 있음",
+"가스 냄새 없음",
+"가스 누출 의심 없음",
+"가스 차단 위치 파악"
+]}
+]},
+{title:"8. 실외 시설",important:false,items:[
+{section:"8.1 차고 및 주차",items:[
+"차고문 열림/닫힘 정상",
+"차고문 리모컨 작동함",
+"차고 조명 작동함",
+"차고 콘센트 작동함",
+"차고 청소됨"
+]},
+{section:"8.2 진입 게이트 (해당 시)",items:[
+"게이트 열림/닫힘 정상",
+"게이트 리모컨 작동함",
+"전자 접근 코드 작동함",
+"안전 기능 작동함 (자동 정지)"
+]},
+{section:"8.3 정원 물 시스템 (해당 시)",items:[
+"정원 관개 시스템 작동함",
+"스프링클러 작동함",
+"외부 수도 흐름 정상"
+]}
+]},
+{title:"9. 기타 포함물",important:false,items:[
+{section:"9.1 커튼 및 블라인드 [중요]",important:true,items:[
+"모든 커튼/블라인드 남아있음",
+"모든 커튼봉 설치됨",
+"블라인드 작동 정상",
+"손잡이/줄/체인 온전함"
+]},
+{section:"9.2 거울, 액자 및 고정물",items:[
+"계약 거울 남아있음",
+"계약 액자 남아있음",
+"조명 기구 설치됨",
+"천장 선풍기 설치됨 (해당 시)",
+"타일 손상 없음"
+]},
+{section:"9.3 키 및 접근 코드 [중요]",important:true,items:[
+"모든 키 제공됨 (현관, 차고, 우편함 등)",
+"열쇠 개수 확인",
+"알람 코드 제공됨 (해당 시)",
+"Wi-Fi 비밀번호 제공됨 (해당 시)",
+"앱/시스템 로그인 정보 제공됨 (해당 시)"
+]}
+]},
+{title:"10. 계약 조건 수리",important:true,items:[
+{section:"10.1 검사 보고서 기반 수리 확인",important:true,items:[
+"수리 항목 1: (아래 메모에 기록)",
+"수리 항목 2: (아래 메모에 기록)",
+"수리 항목 3: (아래 메모에 기록)",
+"모든 수리 영수증 수령함",
+"모든 수리 품질 확인함"
+]}
+]},
+{title:"11. 신규 손상 확인",important:true,items:[
+{section:"11.1 계약 후 새로 발생한 손상",important:true,items:[
+"새로운 벽/바닥 손상 없음",
+"새로운 설비 손상 없음",
+"새로운 외부 손상 없음",
+"손상 발견 시 아래 메모에 상세 기록"
+]}
+]},
+{title:"12. 최종 평가",important:true,items:[
+{section:"12.1 종합 평가",important:true,items:[
+"계약 시 상태와 동일함",
+"청소 상태 만족함",
+"모든 포함물 확인됨",
+"모든 설비 작동함",
+"새 손상 없음 또는 경미함",
+"Settlement 진행 가능"
+]}
+]}
+];
+
+let states = {};
+let photos = {};
+let memos = {};
+
+function init(){
+const c = document.getElementById('sectionsContainer');
+let itemIdx = 0;
+DATA.forEach((sec, si) => {
+let html = '';
+sec.items.forEach((sub, subi) => {
+const secId = `s${si}_${subi}`;
+const isImp = sub.important || false;
+html += `<div class="section">`;
+html += `<div class="section-title${isImp?' important':''}" onclick="toggleSection('${secId}')">`;
+html += `<span class="arrow">&#9660;</span>`;
+html += `<span>${sub.section}</span>`;
+if(isImp) html += `<span class="badge">중요</span>`;
+html += `<span class="count" id="cnt_${secId}">0/${sub.items.length}</span>`;
+html += `</div>`;
+html += `<div class="section-body" id="body_${secId}">`;
+sub.items.forEach((item, ii) => {
+const iid = `i${si}_${subi}_${ii}`;
+itemIdx++;
+html += `<div class="item">`;
+html += `<div class="item-text">${item}</div>`;
+html += `<div class="toggle-group">`;
+html += `<div class="toggle-btn" id="o_${iid}" onclick="setToggle('${iid}','O')">O</div>`;
+html += `<div class="toggle-btn" id="x_${iid}" onclick="setToggle('${iid}','X')">X</div>`;
+html += `</div></div>`;
+});
+html += `<div class="memo-area">`;
+html += `<textarea id="memo_${secId}" placeholder="메모 (문제 발견 시 기록)" oninput="saveMemo('${secId}',this.value)"></textarea>`;
+html += `<div class="photo-row">`;
+html += `<label class="photo-btn">&#128247; 사진<input type="file" accept="image/*" capture="environment" multiple onchange="addPhoto('${secId}',this)"></label>`;
+html += `<span id="photos_${secId}"></span>`;
+html += `</div></div>`;
+html += `</div></div>`;
+});
+c.innerHTML += html;
+});
+window._totalItems = itemIdx;
+updateProgress();
+updateSummary();
+}
+
+function setToggle(id, val){
+const cur = states[id];
+if(cur === val) { delete states[id]; } else { states[id] = val; }
+const oBtn = document.getElementById('o_'+id);
+const xBtn = document.getElementById('x_'+id);
+oBtn.className = 'toggle-btn' + (states[id]==='O'?' pass':'');
+xBtn.className = 'toggle-btn' + (states[id]==='X'?' fail':'');
+updateProgress();
+updateCounts();
+updateSummary();
+}
+
+function toggleSection(secId){
+const body = document.getElementById('body_'+secId);
+const title = body.previousElementSibling;
+body.classList.toggle('hidden');
+title.classList.toggle('collapsed');
+}
+
+function saveMemo(secId, val){ memos[secId] = val; }
+
+function addPhoto(secId, input){
+if(!photos[secId]) photos[secId] = [];
+const container = document.getElementById('photos_'+secId);
+Array.from(input.files).forEach(f => {
+photos[secId].push(f.name);
+const url = URL.createObjectURL(f);
+const img = document.createElement('img');
+img.src = url; img.className = 'photo-thumb';
+container.appendChild(img);
+});
+input.value = '';
+}
+
+function updateProgress(){
+const checked = Object.keys(states).length;
+const pct = window._totalItems > 0 ? (checked / window._totalItems * 100) : 0;
+document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateCounts(){
+DATA.forEach((sec, si) => {
+sec.items.forEach((sub, subi) => {
+const secId = `s${si}_${subi}`;
+let done = 0;
+sub.items.forEach((_, ii) => {
+if(states[`i${si}_${subi}_${ii}`]) done++;
+});
+const el = document.getElementById('cnt_'+secId);
+if(el) el.textContent = `${done}/${sub.items.length}`;
+});
+});
+}
+
+function updateSummary(){
+let pass=0, fail=0, unchecked=0;
+let totalItems = 0;
+DATA.forEach((sec, si) => {
+sec.items.forEach((sub, subi) => {
+sub.items.forEach((_, ii) => {
+totalItems++;
+const s = states[`i${si}_${subi}_${ii}`];
+if(s==='O') pass++;
+else if(s==='X') fail++;
+else unchecked++;
+});
+});
+});
+const el = document.getElementById('summaryContent');
+el.innerHTML = `
+<div class="summary-row"><span>전체 항목</span><strong>${totalItems}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--pass)"></span> 정상 (O)</span></span><strong>${pass}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--fail)"></span> 문제 (X)</span></span><strong style="color:${fail>0?'var(--fail)':'inherit'}">${fail}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--none)"></span> 미확인</span></span><strong>${unchecked}</strong></div>
+`;
+}
+
+function resetAll(){
+if(!confirm('모든 체크를 초기화하시겠습니까?')) return;
+states = {}; photos = {}; memos = {};
+document.querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
+document.querySelectorAll('textarea').forEach(t => t.value = '');
+document.querySelectorAll('[id^="photos_"]').forEach(c => c.innerHTML = '');
+updateProgress(); updateCounts(); updateSummary();
+}
+
+function exportResult(){
+const date = document.getElementById('inspDate').value || '미입력';
+const time = document.getElementById('inspTime').value || '미입력';
+const addr = document.getElementById('inspAddr').value || '미입력';
+const name = document.getElementById('inspName').value || '미입력';
+let txt = `=== Pre-Settlement 검사 결과 ===\n`;
+txt += `날짜: ${date} / 시간: ${time}\n주소: ${addr}\n검사자: ${name}\n\n`;
+
+DATA.forEach((sec, si) => {
+txt += `--- ${sec.title} ---\n`;
+sec.items.forEach((sub, subi) => {
+txt += `  [${sub.section}]\n`;
+sub.items.forEach((item, ii) => {
+const s = states[`i${si}_${subi}_${ii}`] || '-';
+txt += `    ${s} ${item}\n`;
+});
+const secId = `s${si}_${subi}`;
+const m = memos[secId] || document.getElementById('memo_'+secId)?.value;
+if(m) txt += `    memo: ${m}\n`;
+if(photos[secId]?.length) txt += `    photos: ${photos[secId].join(', ')}\n`;
+txt += '\n';
+});
+});
+
+let pass=0,fail=0,unc=0;
+let total=0;
+DATA.forEach((sec,si)=>{sec.items.forEach((sub,subi)=>{sub.items.forEach((_,ii)=>{total++;const s=states[`i${si}_${subi}_${ii}`];if(s==='O')pass++;else if(s==='X')fail++;else unc++;});});});
+txt += `=== 요약 ===\n전체: ${total} / 정상(O): ${pass} / 문제(X): ${fail} / 미확인: ${unc}\n`;
+
+navigator.clipboard.writeText(txt).then(()=>{
+alert('결과가 클립보드에 복사되었습니다.\n메모앱이나 메신저에 붙여넣기 하세요.');
+}).catch(()=>{
+const ta = document.createElement('textarea');
+ta.value = txt; document.body.appendChild(ta);
+ta.select(); document.execCommand('copy');
+document.body.removeChild(ta);
+alert('결과가 복사되었습니다.');
+});
+}
+
+init();
+</script>
+</body>
+</html>
