@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pre-Settlement Inspection Checklist</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#f5f5f0;--card:#fff;--border:#d4d0c8;
+--pass:#2e7d32;--pass-bg:#e8f5e9;
+--fail:#c62828;--fail-bg:#ffebee;
+--none:#9e9e9e;--none-bg:#f5f5f5;
+--accent:#1565c0;--accent-bg:#e3f2fd;
+--important:#ff6f00;
+--text:#212121;--text2:#616161;
+--shadow:0 1px 3px rgba(0,0,0,.12);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding-bottom:80px}
+.header{background:#1a237e;color:#fff;padding:20px 16px;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:700}
+.header .sub{font-size:12px;opacity:.8;margin-top:2px}
+.info-bar{background:#fff;padding:14px 16px;border-bottom:1px solid var(--border)}
+.info-bar input{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:14px;margin-top:6px;font-family:inherit}
+.info-bar label{font-size:12px;color:var(--text2);font-weight:600;display:block;margin-top:10px}
+.info-bar label:first-child{margin-top:0}
+.progress-bar{background:#e8eaf6;height:6px;position:sticky;top:62px;z-index:99}
+.progress-fill{height:100%;background:#1a237e;transition:width .3s ease;width:0%}
+.section{margin:12px 8px}
+.section-title{font-size:15px;font-weight:700;padding:12px 14px;background:var(--card);border-radius:10px 10px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.section-title.important{border-left:4px solid var(--important)}
+.section-title .badge{font-size:10px;background:var(--important);color:#fff;padding:1px 6px;border-radius:10px;font-weight:600}
+.section-title .count{margin-left:auto;font-size:12px;color:var(--text2);font-weight:400}
+.section-title .arrow{transition:transform .2s;font-size:12px}
+.section-title.collapsed .arrow{transform:rotate(-90deg)}
+.section-body{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden}
+.section-body.hidden{display:none}
+.item{padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:flex-start;gap:10px}
+.item:last-child{border-bottom:none}
+.item-text{flex:1;font-size:13px;line-height:1.4;padding-top:4px}
+.toggle-group{display:flex;gap:4px;flex-shrink:0}
+.toggle-btn{width:38px;height:34px;border-radius:6px;border:1.5px solid var(--border);background:var(--none-bg);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none}
+.toggle-btn.pass{border-color:var(--pass);background:var(--pass-bg);color:var(--pass)}
+.toggle-btn.fail{border-color:var(--fail);background:var(--fail-bg);color:var(--fail)}
+.toggle-btn:active{transform:scale(.92)}
+.memo-area{padding:8px 14px 12px;background:#fafafa;border-bottom:1px solid #eee}
+.memo-area textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;resize:vertical;min-height:36px;font-family:inherit}
+.memo-area .photo-row{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.photo-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px dashed var(--accent);border-radius:6px;background:var(--accent-bg);color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent}
+.photo-btn input{display:none}
+.photo-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border)}
+.summary-section{margin:12px 8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.summary-section h3{font-size:14px;margin-bottom:10px}
+.summary-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.summary-row:last-child{border:none}
+.stat{display:inline-flex;align-items:center;gap:4px}
+.stat .dot{width:10px;height:10px;border-radius:50%}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:100}
+.bottom-bar button{flex:1;padding:10px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-export{background:#1a237e;color:#fff}
+.btn-reset{background:#f5f5f5;color:var(--text2);border:1px solid var(--border)!important}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>Pre-Settlement Inspection Checklist</h1>
+<div class="sub">NSW Australia Duplex / English Version</div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="info-bar">
+<label>Inspection Date<input type="date" id="inspDate"></label>
+<label>Inspection Time<input type="time" id="inspTime"></label>
+<label>Property Address<input type="text" id="inspAddr" placeholder="Enter address"></label>
+<label>Inspector Name<input type="text" id="inspName" placeholder="Your name"></label>
+</div>
+
+<div id="sectionsContainer"></div>
+
+<div class="summary-section" id="summarySection">
+<h3>Inspection Summary</h3>
+<div id="summaryContent"></div>
+</div>
+
+<div class="bottom-bar">
+<button class="btn-reset" onclick="resetAll()">Reset</button>
+<button class="btn-export" onclick="exportResult()">Copy Results</button>
+</div>
+
+<script>
+const DATA = [
+{title:"1. Exterior & Entry",important:false,items:[
+{section:"1.1 Garden & Landscaping",items:[
+"Lawn/plants clean, no litter",
+"Fence undamaged",
+"Driveway/pathway clean",
+"Outdoor lights working",
+"Garden inclusions remain (check contract)",
+"Garden tap working, no leaks"
+]},
+{section:"1.2 Roof & Exterior Walls",items:[
+"No roof damage/missing tiles (binoculars recommended)",
+"Gutters undamaged, no blockages",
+"Downpipes connected",
+"No cracks/water damage on exterior walls",
+"No mould/moss",
+"Window frames not rotting"
+]},
+{section:"1.3 Doors & Windows",items:[
+"All doors open/close smoothly",
+"Door locks working",
+"All windows open/close smoothly",
+"Window locks working",
+"No broken glass",
+"Seals/caulking in good condition"
+]}
+]},
+{title:"2. Interior Structure",important:false,items:[
+{section:"2.1 Walls, Floors, Ceilings",items:[
+"No holes/cracks (except pre-existing)",
+"Floors have minimal scratches (normal wear)",
+"Carpet/timber floor in good condition",
+"No ceiling water stains",
+"No mould/water damage signs",
+"Paintwork not peeling"
+]},
+{section:"2.2 Cleanliness [IMPORTANT]",important:true,items:[
+"Entire property thoroughly cleaned",
+"Kitchen clean, no grease marks",
+"Bathroom clean, no soap scum",
+"Bedrooms clean",
+"Fridge/oven interiors cleaned",
+"No unusual odours (mould, smoke, etc.)",
+"No rubbish or personal items left behind"
+]},
+{section:"2.3 Contract Inclusions [IMPORTANT]",important:true,items:[
+"All curtains/blinds remain",
+"All light fittings installed",
+"Built-in cabinets/shelves remain",
+"Contract appliances/furniture present",
+"All keys and remotes provided",
+"Mirrors/pictures not removed"
+]}
+]},
+{title:"3. Electrical Systems",important:false,items:[
+{section:"3.1 Lighting",items:[
+"All indoor lights working",
+"All switches functional",
+"Outdoor lights working",
+"No significant flickering"
+]},
+{section:"3.2 Power Points [IMPORTANT] - Test with phone charger",important:true,items:[
+"All bedroom outlets working",
+"All kitchen outlets working",
+"All bathroom outlets working",
+"All living room outlets working",
+"All outdoor outlets working"
+]},
+{section:"3.3 Appliances [IMPORTANT]",important:true,items:[
+"Oven/cooktop working (gas/electric)",
+"Dishwasher working (test manual cycle)",
+"Washing machine working",
+"Dryer working (if installed)",
+"Fridge cooling properly",
+"Microwave working",
+"Air conditioning/heating working",
+"Hot water available within 3 seconds"
+]},
+{section:"3.4 Special Systems",items:[
+"Doorbell working",
+"Intercom working (if applicable)",
+"CCTV working (if applicable)",
+"Alarm code provided (if applicable)",
+"Garage door remote working (if applicable)",
+"Gate remote working (if applicable)"
+]}
+]},
+{title:"4. Plumbing & Water",important:false,items:[
+{section:"4.1 Sinks & Taps [IMPORTANT]",important:true,items:[
+"All taps (hot/cold) working",
+"Water flow normal",
+"No leaks under taps",
+"Drains flowing properly",
+"Shower flow normal"
+]},
+{section:"4.2 Toilets",items:[
+"Toilet flush working",
+"No water leaks",
+"Seat/lid intact",
+"No unusual plumbing noises",
+"Exhaust fan working (if installed)"
+]},
+{section:"4.3 Hot Water System",items:[
+"Hot water available immediately",
+"Water sufficiently hot (test)",
+"No leaks around water heater",
+"Water heater location accessible",
+"Backflow prevention device present"
+]},
+{section:"4.4 Drainage & Other",items:[
+"No sewer smell",
+"Floor drains working (if applicable)",
+"Laundry drain working",
+"Water meter accessible",
+"Main water shut-off location known"
+]}
+]},
+{title:"5. Heating & Cooling",important:false,items:[
+{section:"5.1 Air Conditioning & Heating",items:[
+"Air conditioning cooling properly",
+"Heater working",
+"All indoor units functioning",
+"Remotes/controls working",
+"No unusual noises",
+"Filters checked"
+]},
+{section:"5.2 Ventilation",items:[
+"Exhaust fans working (kitchen/bathroom)",
+"Exhaust ducts in good condition",
+"General ventilation adequate"
+]}
+]},
+{title:"6. Safety Systems",important:true,items:[
+{section:"6.1 Smoke Detectors [MANDATORY]",important:true,items:[
+"Installed in all bedrooms",
+"Installed in living area",
+"NOT near kitchen (false alarms)",
+"Test buttons working",
+"Batteries functional"
+]},
+{section:"6.2 Carbon Monoxide Detector (if gas present)",items:[
+"Detector installed",
+"Working properly"
+]},
+{section:"6.3 Fire Extinguisher & Safety Equipment",items:[
+"Fire extinguisher provided (if applicable)",
+"Location known"
+]}
+]},
+{title:"7. Gas System",important:false,items:[
+{section:"7.1 Gas Cooktop & Oven [IMPORTANT]",important:true,items:[
+"All burners ignite",
+"Flame colour normal (blue)",
+"Controls working",
+"Oven heating"
+]},
+{section:"7.2 Gas Meter & Safety",items:[
+"Gas meter readable",
+"No gas smell",
+"No gas leak suspected",
+"Gas shut-off location known"
+]}
+]},
+{title:"8. Outdoor Facilities",important:false,items:[
+{section:"8.1 Garage & Parking",items:[
+"Garage door opens/closes smoothly",
+"Garage door remote working",
+"Garage lights working",
+"Garage outlets working",
+"Garage clean"
+]},
+{section:"8.2 Entry Gate (if applicable)",items:[
+"Gate opens/closes smoothly",
+"Gate remote working",
+"Electronic access code working",
+"Safety features working (auto-stop)"
+]},
+{section:"8.3 Garden Water Systems (if applicable)",items:[
+"Irrigation system working",
+"Sprinkler system working",
+"Outdoor tap water flow normal"
+]}
+]},
+{title:"9. Other Inclusions",important:false,items:[
+{section:"9.1 Curtains & Blinds [IMPORTANT]",important:true,items:[
+"All curtains/blinds remain",
+"All curtain rods installed",
+"Blinds operating smoothly",
+"Handles/cords/chains intact"
+]},
+{section:"9.2 Mirrors, Pictures & Fixtures",items:[
+"Contract mirrors remain",
+"Contract pictures remain",
+"Light fittings installed",
+"Ceiling fans installed (if applicable)",
+"Tiles undamaged"
+]},
+{section:"9.3 Keys & Access Codes [IMPORTANT]",important:true,items:[
+"All keys provided (front, garage, mailbox, etc.)",
+"Key copy quantity confirmed",
+"Alarm code provided (if applicable)",
+"Wi-Fi password provided (if applicable)",
+"App/system login info provided (if applicable)"
+]}
+]},
+{title:"10. Contract Repairs",important:true,items:[
+{section:"10.1 Repairs from Inspection Report",important:true,items:[
+"Repair item 1: (record in notes below)",
+"Repair item 2: (record in notes below)",
+"Repair item 3: (record in notes below)",
+"All repair receipts received",
+"All repair quality verified"
+]}
+]},
+{title:"11. New Damage",important:true,items:[
+{section:"11.1 Damage after contract exchange",important:true,items:[
+"No new wall/floor damage",
+"No new fixture damage",
+"No new exterior damage",
+"If damage found, record details in notes below"
+]}
+]},
+{title:"12. Final Assessment",important:true,items:[
+{section:"12.1 Overall Assessment",important:true,items:[
+"Property in same condition as at contract exchange",
+"Cleanliness acceptable",
+"All inclusions confirmed",
+"All systems functional",
+"No new damage or minor only",
+"Ready to proceed with settlement"
+]}
+]}
+];
+
+let states = {};
+let photos = {};
+let memos = {};
+
+function init(){
+const c = document.getElementById('sectionsContainer');
+let itemIdx = 0;
+DATA.forEach((sec, si) => {
+let html = '';
+sec.items.forEach((sub, subi) => {
+const secId = `s${si}_${subi}`;
+const isImp = sub.important || false;
+html += `<div class="section">`;
+html += `<div class="section-title${isImp?' important':''}" onclick="toggleSection('${secId}')">`;
+html += `<span class="arrow">&#9660;</span>`;
+html += `<span>${sub.section}</span>`;
+if(isImp) html += `<span class="badge">KEY</span>`;
+html += `<span class="count" id="cnt_${secId}">0/${sub.items.length}</span>`;
+html += `</div>`;
+html += `<div class="section-body" id="body_${secId}">`;
+sub.items.forEach((item, ii) => {
+const iid = `i${si}_${subi}_${ii}`;
+itemIdx++;
+html += `<div class="item">`;
+html += `<div class="item-text">${item}</div>`;
+html += `<div class="toggle-group">`;
+html += `<div class="toggle-btn" id="o_${iid}" onclick="setToggle('${iid}','O')">O</div>`;
+html += `<div class="toggle-btn" id="x_${iid}" onclick="setToggle('${iid}','X')">X</div>`;
+html += `</div></div>`;
+});
+html += `<div class="memo-area">`;
+html += `<textarea id="memo_${secId}" placeholder="Notes (record any issues found)" oninput="saveMemo('${secId}',this.value)"></textarea>`;
+html += `<div class="photo-row">`;
+html += `<label class="photo-btn">&#128247; Photo<input type="file" accept="image/*" capture="environment" multiple onchange="addPhoto('${secId}',this)"></label>`;
+html += `<span id="photos_${secId}"></span>`;
+html += `</div></div>`;
+html += `</div></div>`;
+});
+c.innerHTML += html;
+});
+window._totalItems = itemIdx;
+updateProgress();
+updateSummary();
+}
+
+function setToggle(id, val){
+const cur = states[id];
+if(cur === val) { delete states[id]; } else { states[id] = val; }
+const oBtn = document.getElementById('o_'+id);
+const xBtn = document.getElementById('x_'+id);
+oBtn.className = 'toggle-btn' + (states[id]==='O'?' pass':'');
+xBtn.className = 'toggle-btn' + (states[id]==='X'?' fail':'');
+updateProgress(); updateCounts(); updateSummary();
+}
+
+function toggleSection(secId){
+const body = document.getElementById('body_'+secId);
+const title = body.previousElementSibling;
+body.classList.toggle('hidden');
+title.classList.toggle('collapsed');
+}
+
+function saveMemo(secId, val){ memos[secId] = val; }
+
+function addPhoto(secId, input){
+if(!photos[secId]) photos[secId] = [];
+const container = document.getElementById('photos_'+secId);
+const secLabel = document.querySelector(`#body_${secId}`)?.previousElementSibling?.textContent?.trim()?.substring(0,20)?.replace(/[^a-zA-Z0-9_.-]/g,'_') || secId;
+Array.from(input.files).forEach((f, i) => {
+const now = new Date();
+const ts = `${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
+const ext = f.name.split('.').pop() || 'jpg';
+const photoName = `${secLabel}_${ts}_${i+1}.${ext}`;
+photos[secId].push(photoName);
+const url = URL.createObjectURL(f);
+const img = document.createElement('img');
+img.src = url; img.className = 'photo-thumb';
+img.title = photoName;
+container.appendChild(img);
+});
+input.value = '';
+}
+
+function updateProgress(){
+const checked = Object.keys(states).length;
+const pct = window._totalItems > 0 ? (checked / window._totalItems * 100) : 0;
+document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateCounts(){
+DATA.forEach((sec, si) => {
+sec.items.forEach((sub, subi) => {
+const secId = `s${si}_${subi}`;
+let done = 0;
+sub.items.forEach((_, ii) => {
+if(states[`i${si}_${subi}_${ii}`]) done++;
+});
+const el = document.getElementById('cnt_'+secId);
+if(el) el.textContent = `${done}/${sub.items.length}`;
+});
+});
+}
+
+function updateSummary(){
+let pass=0, fail=0, unchecked=0;
+let totalItems = 0;
+DATA.forEach((sec, si) => {
+sec.items.forEach((sub, subi) => {
+sub.items.forEach((_, ii) => {
+totalItems++;
+const s = states[`i${si}_${subi}_${ii}`];
+if(s==='O') pass++;
+else if(s==='X') fail++;
+else unchecked++;
+});
+});
+});
+const el = document.getElementById('summaryContent');
+el.innerHTML = `
+<div class="summary-row"><span>Total Items</span><strong>${totalItems}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--pass)"></span> Pass (O)</span></span><strong>${pass}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--fail)"></span> Fail (X)</span></span><strong style="color:${fail>0?'var(--fail)':'inherit'}">${fail}</strong></div>
+<div class="summary-row"><span><span class="stat"><span class="dot" style="background:var(--none)"></span> Unchecked</span></span><strong>${unchecked}</strong></div>
+`;
+}
+
+function resetAll(){
+if(!confirm('Reset all checks? This cannot be undone.')) return;
+states = {}; photos = {}; memos = {};
+document.querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
+document.querySelectorAll('textarea').forEach(t => t.value = '');
+document.querySelectorAll('[id^="photos_"]').forEach(c => c.innerHTML = '');
+updateProgress(); updateCounts(); updateSummary();
+}
+
+function exportResult(){
+const date = document.getElementById('inspDate').value || 'N/A';
+const time = document.getElementById('inspTime').value || 'N/A';
+const addr = document.getElementById('inspAddr').value || 'N/A';
+const name = document.getElementById('inspName').value || 'N/A';
+let txt = `=== Pre-Settlement Inspection Results ===\n`;
+txt += `Date: ${date} / Time: ${time}\nAddress: ${addr}\nInspector: ${name}\n\n`;
+
+DATA.forEach((sec, si) => {
+txt += `--- ${sec.title} ---\n`;
+sec.items.forEach((sub, subi) => {
+txt += `  [${sub.section}]\n`;
+sub.items.forEach((item, ii) => {
+const s = states[`i${si}_${subi}_${ii}`] || '-';
+txt += `    ${s} ${item}\n`;
+});
+const secId = `s${si}_${subi}`;
+const m = memos[secId] || document.getElementById('memo_'+secId)?.value;
+if(m) txt += `    notes: ${m}\n`;
+if(photos[secId]?.length) txt += `    photos: ${photos[secId].join(', ')}\n`;
+txt += '\n';
+});
+});
+
+let pass=0,fail=0,unc=0,total=0;
+DATA.forEach((sec,si)=>{sec.items.forEach((sub,subi)=>{sub.items.forEach((_,ii)=>{total++;const s=states[`i${si}_${subi}_${ii}`];if(s==='O')pass++;else if(s==='X')fail++;else unc++;});});});
+txt += `=== Summary ===\nTotal: ${total} / Pass(O): ${pass} / Fail(X): ${fail} / Unchecked: ${unc}\n`;
+
+navigator.clipboard.writeText(txt).then(()=>{
+alert('Results copied to clipboard.\nPaste into Notes or messaging app.');
+}).catch(()=>{
+const ta = document.createElement('textarea');
+ta.value = txt; document.body.appendChild(ta);
+ta.select(); document.execCommand('copy');
+document.body.removeChild(ta);
+alert('Results copied.');
+});
+}
+
+init();
+</script>
+</body>
+</html>
